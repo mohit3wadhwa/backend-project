@@ -15,4 +15,3 @@ pylint==2.4.4
 websockets==8.1
 wrapt==1.11.2
 httptools
-uvloops
