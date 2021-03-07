@@ -45,5 +45,5 @@ def delete_item(item_id: int):
     for key in fakeDB.keys():
         if item_id == key:
             del fakeDB[item_id]
-            return{"Success! Item ",item_id," deleted successfully"}
+            return{item_id," item deleted successfully!"}
     raise HTTPException(status_code=404, detail="Item not found for deletion")
