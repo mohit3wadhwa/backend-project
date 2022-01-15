@@ -1,0 +1,12 @@
+{
+  "phone": "1234567890",
+  "password": "$@$@%$^%&*^&*%",
+  "email": "string@gmail.com",
+  "firstName": "MMM",
+  "lastName": "WWW",
+  "gender": "Male",
+  "dob": "03/03/4040",
+  "location": "Gohana",
+  "timestamp": "0",
+  "updatedBy": "manual"
+}

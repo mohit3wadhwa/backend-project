@@ -1,48 +1,62 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import Optional
+from models import User
+import pymongo
+import os
+from dotenv import load_dotenv
 
 app = FastAPI()
+load_dotenv()
 
-fakeDB = {}
-
-class Item(BaseModel):
-    name: str
-    price: float
-    is_offer: Optional[bool] = None
-
+def connect_db():
+    try:
+        client = pymongo.MongoClient(os.getenv('MONGODB_ATLAS_URI'), serverSelectionTimeoutMS=5000)
+        print("DB connection successful")
+    except Exception:
+        print("Something is wrong while connecting to Database")
+    
+    db = client.get_database('userDB')
+    coll = db["users"]
+    return coll
+    
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"Hello": "World!"}
 
+@app.get("/user/{username}/pass/{password}")
+def read_item(username: str, password: str):
+    coll_name = connect_db()
+    check_user_phone = coll_name.find_one({"phone": username})
+    check_user_email = coll_name.find_one({"email": username})
+    if check_user_phone or check_user_email:
+        check_password = coll_name.find_one({"password": password})
+        if check_password:
+            return {"Response": "User Successfully Authenticated!"}
+        else:
+            raise HTTPException(status_code=404, detail="User does not exists or incorrect password")
+    raise HTTPException(status_code=404, detail="User does not exists or incorrect password")
+    
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int):
-    for key in fakeDB.keys():
-        if item_id == key:
-            #return{"item_id": item_id, "value": value}
-            return {"item": fakeDB[key]}
-    #return{"no items found"}
-    raise HTTPException(status_code=404, detail="Item not found")
-
-@app.get("/items")
-def read_all_items():
-    if not fakeDB:
-        raise HTTPException(status_code=404, detail="No Items found")
+@app.post("/user/", status_code=201)
+def insert_user(user: User):
+    coll_name = connect_db()
+    check_user_phone = coll_name.find_one({"phone": user.phone})
+    check_user_email = coll_name.find_one({"email": user.email})
+    if not check_user_phone and not check_user_email:
+        _id = coll_name.insert_one(user.__dict__).inserted_id
+        return {"Response": "User " + str(_id) + " created successfully!"}
     else:
-        return fakeDB
+        raise HTTPException(status_code=409, detail="Phone Number or Email already exists")
 
+# @app.put("/items/{item_id}")
+# def update_item(item_id: int, item: Item):
+#     fakeDB[item_id] = item
+#     return {"item_name": item.name, "item_id": item_id}
 
-@app.put("/items/{item_id}")
-def update_item(item_id: int, item: Item):
-    fakeDB[item_id] = item
-    return {"item_name": item.name, "item_id": item_id}
-
-@app.delete("/items/{item_id}")
-def delete_item(item_id: int):
-    for key in fakeDB.keys():
-        if item_id == key:
-            del fakeDB[item_id]
-            return{item_id," item deleted successfully!"}
-    raise HTTPException(status_code=404, detail="Item not found for deletion")
+# @app.delete("/items/{item_id}")
+# def delete_item(item_id: int):
+#     for key in fakeDB.keys():
+#         if item_id == key:
+#             del fakeDB[item_id]
+#             return{item_id," item deleted successfully!"}
+#     raise HTTPException(status_code=404, detail="Item not found for deletion")
