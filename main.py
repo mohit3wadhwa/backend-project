@@ -31,8 +31,10 @@ def read_item(credentials: HTTPBasicCredentials = Depends(security)):
     coll_name = connect_db()
     check_user_phone = coll_name.find_one({"phone": credentials.username, "password": credentials.password})
     check_user_email = coll_name.find_one({"email": credentials.username, "password": credentials.password})
-    if check_user_phone or check_user_email:
-        return {"Response": "User Successfully Authenticated!"}
+    if check_user_phone:
+        return {"Response": "User Successfully Authenticated!", "data": str(check_user_phone)}
+    elif check_user_email:
+        return {"Response": "User Successfully Authenticated!", "data": str(check_user_email)}
     else:
         raise HTTPException(status_code=401, detail="User does not exists or incorrect password", headers={'WWW-Authenticate': 'Basic'},)
     
