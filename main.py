@@ -1,4 +1,3 @@
-from ast import Delete
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from models import User, DeleteUser, UpdateUser
