@@ -13,3 +13,7 @@ class User(BaseModel):
     location: Optional[str] = None
     timestamp: datetime = datetime.now()
     updatedBy: str = 'api'
+    
+class UserAuth(BaseModel):
+    username: str
+    password: str
