@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from models import User, UserAuth
+from models import User
 import pymongo
 import os
 from dotenv import load_dotenv
