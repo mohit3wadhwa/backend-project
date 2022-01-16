@@ -1,6 +1,7 @@
+from ast import Delete
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from models import User
+from models import User, DeleteUser, UpdateUser
 import pymongo
 import os
 from dotenv import load_dotenv
@@ -29,15 +30,12 @@ def read_root():
 @app.get("/signin/")
 def read_item(credentials: HTTPBasicCredentials = Depends(security)):
     coll_name = connect_db()
-    check_user_phone = coll_name.find_one({"phone": credentials.username})
-    check_user_email = coll_name.find_one({"email": credentials.username})
+    check_user_phone = coll_name.find_one({"phone": credentials.username, "password": credentials.password})
+    check_user_email = coll_name.find_one({"email": credentials.username, "password": credentials.password})
     if check_user_phone or check_user_email:
-        check_password = coll_name.find_one({"password": credentials.password})
-        if check_password:
-            return {"Response": "User Successfully Authenticated!"}
-        else:
-            raise HTTPException(status_code=401, detail="User does not exists or incorrect password", headers={'WWW-Authenticate': 'Basic'},)
-    raise HTTPException(status_code=401, detail="User does not exists or incorrect password", headers={'WWW-Authenticate': 'Basic'},)
+        return {"Response": "User Successfully Authenticated!"}
+    else:
+        raise HTTPException(status_code=401, detail="User does not exists or incorrect password", headers={'WWW-Authenticate': 'Basic'},)
     
 
 @app.post("/signup/", status_code=201)
@@ -51,15 +49,30 @@ def insert_user(user: User):
     else:
         raise HTTPException(status_code=409, detail="Phone Number or Email already exists")
 
-# @app.put("/items/{item_id}")
-# def update_item(item_id: int, item: Item):
-#     fakeDB[item_id] = item
-#     return {"item_name": item.name, "item_id": item_id}
+@app.put("/update/user/")
+def update_user(user: UpdateUser):
+    coll_name = connect_db()
+    check_user = coll_name.find_one({"phone": user.phone, "password": user.password})
+    if check_user:
+        filter_query = {"phone": user.phone, "password": user.password}
+        new_values = {"$set": user.__dict__}
+        coll_name.update_one(filter_query, new_values)
+        return {"Response": "User Successfully Updated!"}
+    else:
+        raise HTTPException(status_code=404, detail="User does not exists or incorrect password")
 
-# @app.delete("/items/{item_id}")
-# def delete_item(item_id: int):
-#     for key in fakeDB.keys():
-#         if item_id == key:
-#             del fakeDB[item_id]
-#             return{item_id," item deleted successfully!"}
-#     raise HTTPException(status_code=404, detail="Item not found for deletion")
+
+@app.delete("/delete/user/")
+def delete_user(user: DeleteUser):
+    coll_name = connect_db()
+    check_user_phone = coll_name.find_one({"phone": user.username, "password": user.password})
+    check_user_email = coll_name.find_one({"email": user.username, "password": user.password})
+    if check_user_email:
+        coll_name.delete_one({"email": user.username, "password": user.password})
+        return {"Response": "User Deleted Successfully!"}
+    elif check_user_phone:
+        coll_name.delete_one({"phone": user.username, "password": user.password})
+        return {"Response": "User Deleted Successfully!"}
+    else:
+        raise HTTPException(status_code=404, detail="User does not exists or incorrect password")
+    
